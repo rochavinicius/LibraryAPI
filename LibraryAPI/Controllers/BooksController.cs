@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace LibraryAPI.Controllers
 {
@@ -15,13 +16,15 @@ namespace LibraryAPI.Controllers
     public class BooksController : Controller
     {
         private ILibraryRepository _libraryRepository;
+        private ILogger<BooksController> _logger;
 
-        public BooksController(ILibraryRepository libraryRepository)
+        public BooksController(ILibraryRepository libraryRepository, ILogger<BooksController> logger)
         {
             _libraryRepository = libraryRepository;
+            _logger = logger;
         }
 
-        [HttpGet("")]
+        [HttpGet()]
         public IActionResult GetBooksForAuthor(Guid authorId)
         {
             if (!_libraryRepository.AuthorExists(authorId))
@@ -123,6 +126,17 @@ namespace LibraryAPI.Controllers
                 return BadRequest();
             }
 
+            if (book.Description == book.Title)
+            {
+                ModelState.AddModelError(nameof(BookForUpdateDto),
+                    "The title and description must be different.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return new Helpers.UnprocessableEntityObjectResult(ModelState);
+            }
+
             if (!_libraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
@@ -173,7 +187,20 @@ namespace LibraryAPI.Controllers
             if (bookFromRepo == null)
             {
                 var bookDto = new BookForUpdateDto();
-                patchDoc.ApplyTo(bookDto);
+                patchDoc.ApplyTo(bookDto, ModelState);
+
+                if (bookDto.Description == bookDto.Title)
+                {
+                    ModelState.AddModelError(nameof(BookForUpdateDto),
+                        "The title and description must be different.");
+                }
+
+                TryValidateModel(bookDto);
+
+                if (!ModelState.IsValid)
+                {
+                    return new Helpers.UnprocessableEntityObjectResult(ModelState);
+                }
 
                 var bookToAdd = AutoMapper.Mapper.Map<Book>(bookDto);
                 bookToAdd.Id = bookId;
@@ -189,9 +216,20 @@ namespace LibraryAPI.Controllers
 
             var bookToPatch = AutoMapper.Mapper.Map<BookForUpdateDto>(bookFromRepo);
 
-            patchDoc.ApplyTo(bookToPatch);
+            patchDoc.ApplyTo(bookToPatch, ModelState);
 
-            // Add patch validation
+            if (bookToPatch.Description == bookToPatch.Title)
+            {
+                ModelState.AddModelError(nameof(BookForUpdateDto),
+                    "The title and description must be different.");
+            }
+
+            TryValidateModel(bookToPatch);
+
+            if (!ModelState.IsValid)
+            {
+                return new Helpers.UnprocessableEntityObjectResult(ModelState);
+            }
 
             AutoMapper.Mapper.Map(bookToPatch, bookFromRepo);
 
