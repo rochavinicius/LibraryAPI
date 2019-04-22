@@ -1,5 +1,6 @@
 ﻿using LibraryAPI.Entities;
 using LibraryAPI.Helpers;
+using LibraryAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,12 @@ namespace LibraryAPI.Services
     public class LibraryRepository : ILibraryRepository
     {
         private LibraryContext _context;
+        private IPropertyMappingService _propertyMappingService;
 
-        public LibraryRepository(LibraryContext context)
+        public LibraryRepository(LibraryContext context, IPropertyMappingService propertyMappingService)
         {
             _context = context;
+            _propertyMappingService = propertyMappingService;
         }
 
         public void AddAuthor(Author author)
@@ -67,10 +70,13 @@ namespace LibraryAPI.Services
 
         public PagedList<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters)
         {
-            var collectionsBeforePaging = _context.Authors
-                .OrderBy(a => a.FirstName)
-                .ThenBy(a => a.LastName)
-                .AsQueryable();
+            //var collectionsBeforePaging = _context.Authors
+            //    .OrderBy(a => a.FirstName)
+            //    .ThenBy(a => a.LastName)
+            //    .AsQueryable();
+
+            var collectionsBeforePaging = _context.Authors.ApplySort(
+                authorsResourceParameters.OrderBy, _propertyMappingService.GetPropertyMapping<AuthorDto, Author>());
 
             if (!string.IsNullOrEmpty(authorsResourceParameters.Genre))
             {
