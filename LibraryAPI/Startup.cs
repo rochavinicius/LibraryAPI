@@ -19,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Serialization;
 
 namespace LibraryAPI
 {
@@ -40,7 +41,12 @@ namespace LibraryAPI
                 setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
 
                 setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
-            });
+            })
+            .AddJsonOptions(options =>
+             {
+                 options.SerializerSettings.ContractResolver =
+                 new CamelCasePropertyNamesContractResolver();
+             });
 
             // register the DbContext on the container, getting the connection string from
             // appSettings (note: use this during development; in a production environment,
