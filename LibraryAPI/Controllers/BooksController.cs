@@ -35,7 +35,7 @@ namespace LibraryAPI.Controllers
 
             var books = AutoMapper.Mapper.Map<IEnumerable<BookDto>>(booksFromRepo);
 
-            books = books.Select(book => 
+            books = books.Select(book =>
             {
                 book = CreateLinksForBook(book);
                 return book;
@@ -64,7 +64,7 @@ namespace LibraryAPI.Controllers
             return Ok(CreateLinksForBook(book));
         }
 
-        [HttpPost]
+        [HttpPost(Name = "AddBookForAuthor")]
         public IActionResult AddBookForAuthor(Guid authorId, [FromBody]BookForCreationDto book)
         {
             if (book == null)
@@ -178,7 +178,7 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpPatch("{bookId}", Name = "PartiallyUpdateBookForAuthor")]
-        public IActionResult PartiallyUpdateBookForAuthor(Guid authorId, Guid bookId, 
+        public IActionResult PartiallyUpdateBookForAuthor(Guid authorId, Guid bookId,
             [FromBody] JsonPatchDocument<BookForUpdateDto> patchDoc)
         {
             if (patchDoc == null)
@@ -221,7 +221,7 @@ namespace LibraryAPI.Controllers
                 {
                     throw new Exception($"Failed on create book of id {bookId} for author id {authorId}");
                 }
-                return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, bookId = bookToReturn.Id }, 
+                return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, bookId = bookToReturn.Id },
                     CreateLinksForBook(bookToReturn));
             }
 
@@ -256,7 +256,7 @@ namespace LibraryAPI.Controllers
 
         private BookDto CreateLinksForBook(BookDto book)
         {
-            book.Links.Add(new LinkDto(_urlHelper.Link("GetBookForAuthor", 
+            book.Links.Add(new LinkDto(_urlHelper.Link("GetBookForAuthor",
                 new { bookId = book.Id }),
                 "self",
                 "GET"));
