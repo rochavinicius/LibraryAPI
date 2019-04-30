@@ -2,44 +2,44 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LibraryAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryAPI.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ValuesController : ControllerBase
+    [Route("api")]
+    public class RootController : Controller
     {
-        // GET api/values
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        private IUrlHelper _urlHelper;
+
+        public RootController(IUrlHelper urlHelper)
         {
-            return new string[] { "value1", "value2" };
+            _urlHelper = urlHelper;
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        [HttpGet(Name = "GetRoot")]
+        public IActionResult GetRoot([FromHeader(Name = "Accept")] string mediaType)
         {
-            return "value";
-        }
+            if (mediaType == "application/vnd.marvin.hateoas+json")
+            {
+                var links = new List<LinkDto>();
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
+                links.Add(new LinkDto(_urlHelper.Link("GetRoot", new { }),
+                    "self",
+                    "GET"));
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+                links.Add(new LinkDto(_urlHelper.Link("GetAuthors", new { }),
+                    "authors",
+                    "GET"));
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+                links.Add(new LinkDto(_urlHelper.Link("AddAuthor", new { }),
+                    "authors",
+                    "POST"));
+
+                return Ok(links);
+            }
+
+            return NoContent();
         }
     }
 }
